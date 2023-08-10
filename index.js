@@ -7,11 +7,12 @@ const { User } = require('./models');
 const userRegRoutes = require("./routes/userRegRoutes")
 const userLoginRoutes = require("./routes/userLoginRoutes")
 const userLogoutRoutes = require("./routes/userLogoutRoutes")
+const blogRoutes = require("./routes/blogRoutes")
+const userRoleUpdate = require("./routes/userRoleUpdate")
 
 const authorize = require("./middlewear/authorize.js")
 const authenticate = require('./middlewear/authenticate.js');
 const cookieParser = require("cookie-parser");
-
 
 const app = express();
 const PORT = 3000;
@@ -23,6 +24,9 @@ app.use(cookieParser());
 app.use("/user", userRegRoutes)
 app.use("/user", userLoginRoutes)
 app.use("/user", userLogoutRoutes)
+app.use("/user", authenticate, authorize('Admin'), userRoleUpdate)
+
+app.use("/post",authenticate, authorize('Author'),blogRoutes)
 
 
 app.post('/refresh-token', async (req, res) => {
@@ -44,12 +48,9 @@ app.post('/refresh-token', async (req, res) => {
     }
 });
 
-
-
 app.get('/protected', authenticate, authorize('Admin','Reviewer'), (req, res) => {
     res.json({ message: 'Access granted' });
 });
-
 
 app.listen(PORT, () => {
     console.log(`Server started on http://localhost:${PORT}`);

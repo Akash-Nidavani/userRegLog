@@ -1,11 +1,12 @@
-const { User } = require('../models');
+// const { User } = require('../models');
+const db = require("./../models");
 const bcrypt = require('bcryptjs');
 
 const userReg = async (req, res) => {
     try {
         const { username, email, password, role } = req.body;
         const hashedPassword = await bcrypt.hash(password, 10);
-        const user = await User.create({
+        const user = await db.user.create({
             username,
             email,
             role,
