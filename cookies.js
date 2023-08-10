@@ -58,3 +58,42 @@ const start = (port) => {
   }
 };
 start(3333);
+
+
+
+
+const db = require("./models");
+app.put('/posts/:postId', async (req, res) => {
+  const postId = req.params.postId;
+  const { role } = req.user; // Assuming the user's role is stored in req.user
+  try {
+    const post = await db.blog.findByPk(postId);
+    if (!post) {
+      return res.status(404).json({ error: 'Post not found' });
+    }
+    if (role === 'Admin' || role === 'Reviewer') {
+        const { title, description, content, categoryId, image, status } = req.body;
+        post.status = status;
+        await db.blog.save();
+        res.json(post);
+      // For example, allow editing if the post is authored by the user
+      if (role === 'Admin' || role === 'Reviewer' || (role === 'Author' && post.userId === req.user.id)) {
+        const { title, description, content, categoryId, image } = req.body; //status
+        post.title = title;
+        post.description = description;
+        post.content = content;
+        post.categoryId = categoryId;
+        post.image = image;
+        await db.blog.save();
+        res.json(post);
+        return res.json({ message: 'Post updated successfully' });
+      } else {
+        return res.status(403).json({ error: 'Permission denied' });
+      }
+    } else {
+      return res.status(403).json({ error: 'Permission denied' });
+    }
+  } catch (error) {
+    res.status(500).json({ error: 'Error updating post' });
+  }
+});

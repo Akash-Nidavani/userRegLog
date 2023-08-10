@@ -27,25 +27,55 @@ const createBlog = async (req, res) => {
 };
 
 const updateBlog = async (req, res) => {
+    const postId = req.params.id;
+    const { role } = req.user
     try {
-        const post = await db.post.findByPk(req.params.id);
+        const post = await db.blog.findByPk(postId);
         if (!post) {
-            return res.status(404).json({ error: 'User not found' });
+            return res.status(404).json({ error: 'Blog not found' });
         }
-        const { title, description, content, categoryId, image, status } = req.body; //status
-        post.title = title;
-        post.description = description;
-        post.content = content;
-        post.categoryId = categoryId;
-        post.image = image;
-        post.status = status;
-        await post.save();
-        res.json(post);
+        if (role === 'Admin' || role === 'Reviewer' || (role === 'Author' && post.userId === req.user.id)) {
+            const { title, description, content, categoryId, image, status } = req.body; //status
+            post.title = title;
+            post.description = description;
+            post.content = content;
+            post.categoryId = categoryId;
+            post.image = image;
+            post.status = status;
+            await post.save();
+            return res.json({ message: 'Post updated successfully', post});
+        } else {
+            return res.status(403).json({ error: 'Permission denied' });
+        }
     } catch (error) {
         console.log(error)
         res.status(500).json({ error: "Failed to update the blog" });
     }
 };
 
+
+const changeStatusOfBlog = async (req, res) => {
+    const postId = req.params.id;
+    const { role } = req.user
+    try {
+        const post = await db.blog.findByPk(postId);
+        if (!post) {
+            return res.status(404).json({ error: 'Blog not found' });
+        }
+        if (role === 'Admin' || role === 'Reviewer') {
+            const { status } = req.body; 
+            post.status = status;
+            await post.update();
+            return res.json({ message: 'Post updated successfully', post});
+        } else {
+            return res.status(403).json({ error: 'Permission denied' });
+        }
+    } catch (error) {
+        console.log(error)
+        res.status(500).json({ error: "Failed to update the status of blog" });
+    }
+};
+
 module.exports={createBlog,
-    updateBlog}
+    updateBlog,
+    changeStatusOfBlog}
